@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Watchful LDR — Interactive LDR Voltage Divider</title>
+  <style>
+    :root {
+      --bg: #0f1220;
+      --panel: #171b2e;
+      --panel2: #1d233b;
+      --line: #90a4ff;
+      --text: #eef2ff;
+      --muted: #b4bfdc;
+      --accent: #ffd166;
+      --accent2: #72ddf7;
+      --good: #7ae582;
+      --danger: #ff8fa3;
+      --shadow: 0 18px 38px rgba(0,0,0,0.28);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: linear-gradient(180deg, #0a0d18 0%, #12182b 100%);
+      color: var(--text);
+      line-height: 1.45;
+    }
+    .wrap {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 28px 18px 40px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.6rem, 2.8vw, 2.6rem);
+      letter-spacing: 0.02em;
+    }
+    .sub {
+      color: var(--muted);
+      margin-bottom: 22px;
+      max-width: 900px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .card h2 {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+    .cardHeader {
+      padding: 16px 18px;
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .cardBody { padding: 18px; }
+    .controlGroup { margin-bottom: 18px; }
+    .labelRow {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+    .hint {
+      color: var(--muted);
+      font-size: 0.92rem;
+      margin-top: 6px;
+    }
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    input[type="number"], select {
+      width: 100%;
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font: inherit;
+    }
+    .inline2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .pillRow {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .pillRow input { display: none; }
+    .pillRow label {
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(255,255,255,0.04);
+      cursor: pointer;
+      user-select: none;
+      transition: 120ms ease;
+    }
+    .pillRow input:checked + label {
+      background: rgba(255,209,102,0.16);
+      border-color: rgba(255,209,102,0.62);
+      color: #fff4cc;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .stat {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 12px;
+    }
+    .stat .k {
+      color: var(--muted);
+      font-size: 0.84rem;
+      margin-bottom: 6px;
+    }
+    .stat .v {
+      font-size: 1.2rem;
+      font-weight: 700;
+      word-break: break-word;
+    }
+    .visuals {
+      display: grid;
+      grid-template-columns: 1.05fr 1fr;
+      gap: 18px;
+    }
+    .panel {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+      padding: 16px;
+      min-height: 420px;
+    }
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .note {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: rgba(114,221,247,0.08);
+      border: 1px solid rgba(114,221,247,0.22);
+      color: #e7fbff;
+    }
+    .formula {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: rgba(255,255,255,0.06);
+      border-radius: 10px;
+      padding: 2px 8px;
+      white-space: nowrap;
+    }
+    .legend {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+    .swatch {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      margin-right: 6px;
+      vertical-align: -1px;
+    }
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 0.95rem;
+    }
+    .table th, .table td {
+      padding: 10px 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      text-align: left;
+      vertical-align: top;
+    }
+    .footer {
+      color: var(--muted);
+      font-size: 0.92rem;
+      margin-top: 18px;
+    }
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+      .visuals { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 560px) {
+      .inline2 { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>The Watchful LDR</h1>
+    <div class="sub">
+      Explore how a light-dependent resistor (LDR) changes resistance as light changes, and how its position in a voltage divider affects the output voltage.
+    </div>
+
+    <div class="grid">
+      <section class="card">
+        <div class="cardHeader"><h2>Controls</h2></div>
+        <div class="cardBody">
+          <div class="controlGroup">
+            <div class="labelRow"><span>Supply voltage, V<sub>in</sub></span><span id="vinLbl">5.0 V</span></div>
+            <input id="vin" type="range" min="1" max="12" step="0.1" value="5" />
+          </div>
+
+          <div class="controlGroup">
+            <div class="labelRow"><span>Fixed resistor</span><span id="rfixedLbl">10.0 kΩ</span></div>
+            <input id="rfixed" type="range" min="1000" max="100000" step="100" value="10000" />
+            <div class="hint">This is the resistor paired with the LDR in the divider.</div>
+          </div>
+
+          <div class="controlGroup">
+            <div class="labelRow"><span>Light level</span><span id="lightLbl">50%</span></div>
+            <input id="light" type="range" min="0" max="100" step="1" value="50" />
+            <div class="hint">More light → lower LDR resistance.</div>
+          </div>
+
+          <div class="controlGroup">
+            <div class="labelRow"><span>Illustrative LDR range</span><span></span></div>
+            <div class="inline2">
+              <div>
+                <label for="darkR">Dark resistance</label>
+                <input id="darkR" type="number" min="1000" max="10000000" step="1000" value="100000" />
+              </div>
+              <div>
+                <label for="brightR">Bright resistance</label>
+                <input id="brightR" type="number" min="10" max="1000000" step="10" value="1000" />
+              </div>
+            </div>
+            <div class="hint">The model interpolates on a logarithmic resistance scale between dark and bright conditions.</div>
+          </div>
+
+          <div class="controlGroup">
+            <div class="labelRow"><span>LDR position in divider</span><span></span></div>
+            <div class="pillRow">
+              <input id="posTop" name="position" type="radio" value="top" checked>
+              <label for="posTop">LDR on top</label>
+              <input id="posBottom" name="position" type="radio" value="bottom">
+              <label for="posBottom">LDR on bottom</label>
+            </div>
+            <div class="hint">Output voltage is measured at the junction relative to ground.</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="cardHeader"><h2>Live output</h2></div>
+        <div class="cardBody">
+          <div class="stats">
+            <div class="stat">
+              <div class="k">LDR resistance</div>
+              <div class="v" id="ldrOhms">10.0 kΩ</div>
+            </div>
+            <div class="stat">
+              <div class="k">Top resistor</div>
+              <div class="v" id="topOhms">10.0 kΩ</div>
+            </div>
+            <div class="stat">
+              <div class="k">Bottom resistor</div>
+              <div class="v" id="bottomOhms">10.0 kΩ</div>
+            </div>
+            <div class="stat">
+              <div class="k">Output voltage</div>
+              <div class="v" id="vout">2.50 V</div>
+            </div>
+          </div>
+
+          <div class="visuals">
+            <div class="panel">
+              <svg viewBox="0 0 520 430" aria-label="LDR light visualisation">
+                <defs>
+                  <radialGradient id="lampGlow" cx="50%" cy="28%" r="55%">
+                    <stop offset="0%" stop-color="#fff9d8" stop-opacity="1" />
+                    <stop offset="50%" stop-color="#ffd166" stop-opacity="0.55" />
+                    <stop offset="100%" stop-color="#ffd166" stop-opacity="0" />
+                  </radialGradient>
+                  <linearGradient id="sensorBody" x1="0" x2="1">
+                    <stop offset="0%" stop-color="#b58146" />
+                    <stop offset="100%" stop-color="#6f4720" />
+                  </linearGradient>
+                </defs>
+
+                <circle id="glow" cx="260" cy="95" r="110" fill="url(#lampGlow)" opacity="0.65"></circle>
+                <g transform="translate(215 40)">
+                  <path d="M45 0 C62 0 75 15 75 33 C75 50 63 66 49 72 L49 92 L21 92 L21 72 C7 66 -5 50 -5 33 C-5 15 8 0 25 0 Z" fill="#f0f4ff" opacity="0.95"/>
+                  <rect x="17" y="92" width="36" height="10" rx="3" fill="#c8d1ea"/>
+                </g>
+
+                <g transform="translate(115 180)">
+                  <rect x="110" y="65" width="70" height="100" rx="20" fill="url(#sensorBody)" stroke="#d5aa73" stroke-width="3"/>
+                  <path d="M125 82 Q145 94 165 82 Q145 114 125 106 Q145 122 165 110 Q145 144 125 134" fill="none" stroke="#f7e4c7" stroke-width="6" stroke-linecap="round"/>
+                  <line x1="132" y1="165" x2="132" y2="205" stroke="#cad5ee" stroke-width="5"/>
+                  <line x1="158" y1="165" x2="158" y2="205" stroke="#cad5ee" stroke-width="5"/>
+                  <text x="145" y="232" text-anchor="middle" fill="#eef2ff" font-size="18" font-weight="700">LDR</text>
+                </g>
+
+                <g id="rays"></g>
+                <text x="260" y="395" text-anchor="middle" fill="#b4bfdc" font-size="18">Light falling on the LDR</text>
+              </svg>
+              <div class="legend">
+                <div><span class="swatch" style="background:#ffd166"></span>Higher light</div>
+                <div><span class="swatch" style="background:#ff8fa3"></span>Higher resistance in darkness</div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <svg viewBox="0 0 560 430" aria-label="Voltage divider circuit">
+                <text x="280" y="34" text-anchor="middle" font-size="25" fill="#eef2ff" font-weight="700">Voltage Divider</text>
+
+                <line x1="280" y1="70" x2="280" y2="102" stroke="#90a4ff" stroke-width="4"/>
+                <line x1="280" y1="102" x2="280" y2="112" stroke="#90a4ff" stroke-width="4"/>
+                <text x="302" y="92" fill="#eef2ff" font-size="20">V<tspan baseline-shift="sub" font-size="13">in</tspan></text>
+                <text x="334" y="92" fill="#72ddf7" font-size="20" id="svgVin">= 5.0 V</text>
+
+                <g id="topResistorGroup">
+                  <line x1="280" y1="112" x2="280" y2="132" stroke="#90a4ff" stroke-width="4"/>
+                  <polyline points="280,132 258,145 302,158 258,171 302,184 258,197 302,210 280,223" fill="none" stroke="#ffd166" stroke-width="4" stroke-linejoin="round"/>
+                  <line x1="280" y1="223" x2="280" y2="243" stroke="#90a4ff" stroke-width="4"/>
+                  <text x="335" y="178" fill="#eef2ff" font-size="21" id="topName">LDR</text>
+                  <text x="335" y="206" fill="#ffd166" font-size="19" id="topValue">10.0 kΩ</text>
+                </g>
+
+                <circle cx="280" cy="258" r="6" fill="#72ddf7"/>
+                <line x1="280" y1="258" x2="420" y2="258" stroke="#72ddf7" stroke-width="4"/>
+                <text x="430" y="252" fill="#eef2ff" font-size="21">V<tspan baseline-shift="sub" font-size="13">out</tspan></text>
+                <text x="430" y="280" fill="#72ddf7" font-size="19" id="svgVout">= 2.50 V</text>
+
+                <g id="bottomResistorGroup">
+                  <line x1="280" y1="258" x2="280" y2="278" stroke="#90a4ff" stroke-width="4"/>
+                  <polyline points="280,278 258,291 302,304 258,317 302,330 258,343 302,356 280,369" fill="none" stroke="#7ae582" stroke-width="4" stroke-linejoin="round"/>
+                  <line x1="280" y1="369" x2="280" y2="389" stroke="#90a4ff" stroke-width="4"/>
+                  <text x="335" y="322" fill="#eef2ff" font-size="21" id="bottomName">Fixed resistor</text>
+                  <text x="335" y="350" fill="#7ae582" font-size="19" id="bottomValue">10.0 kΩ</text>
+                </g>
+
+                <line x1="255" y1="389" x2="305" y2="389" stroke="#90a4ff" stroke-width="4"/>
+                <line x1="262" y1="401" x2="298" y2="401" stroke="#90a4ff" stroke-width="4"/>
+                <line x1="270" y1="413" x2="290" y2="413" stroke="#90a4ff" stroke-width="4"/>
+                <text x="314" y="408" fill="#eef2ff" font-size="20">GND</text>
+              </svg>
+              <div class="note" id="explanation">
+                When the <strong>LDR is on top</strong>, increasing light reduces the LDR resistance. Because the output is measured across the <strong>bottom fixed resistor</strong>, the output voltage <strong>increases</strong>.
+              </div>
+            </div>
+          </div>
+
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Arrangement</th>
+                <th>Output equation</th>
+                <th>Effect of increasing light</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>LDR on top</td>
+                <td><span class="formula">Vout = Vin × Rfixed / (RLDR + Rfixed)</span></td>
+                <td>Light ↑ → R<sub>LDR</sub> ↓ → V<sub>out</sub> ↑</td>
+              </tr>
+              <tr>
+                <td>LDR on bottom</td>
+                <td><span class="formula">Vout = Vin × RLDR / (Rfixed + RLDR)</span></td>
+                <td>Light ↑ → R<sub>LDR</sub> ↓ → V<sub>out</sub> ↓</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="footer">
+            Model note: this uses an illustrative LDR model. Real LDR characteristics depend on device type, wavelength and temperature.
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const vin = document.getElementById('vin');
+    const rfixed = document.getElementById('rfixed');
+    const light = document.getElementById('light');
+    const darkR = document.getElementById('darkR');
+    const brightR = document.getElementById('brightR');
+    const posTop = document.getElementById('posTop');
+    const posBottom = document.getElementById('posBottom');
+
+    const vinLbl = document.getElementById('vinLbl');
+    const rfixedLbl = document.getElementById('rfixedLbl');
+    const lightLbl = document.getElementById('lightLbl');
+    const ldrOhms = document.getElementById('ldrOhms');
+    const topOhms = document.getElementById('topOhms');
+    const bottomOhms = document.getElementById('bottomOhms');
+    const vout = document.getElementById('vout');
+    const svgVin = document.getElementById('svgVin');
+    const svgVout = document.getElementById('svgVout');
+    const topName = document.getElementById('topName');
+    const topValue = document.getElementById('topValue');
+    const bottomName = document.getElementById('bottomName');
+    const bottomValue = document.getElementById('bottomValue');
+    const rays = document.getElementById('rays');
+    const glow = document.getElementById('glow');
+    const explanation = document.getElementById('explanation');
+
+    function fmtOhms(ohms) {
+      if (ohms >= 1e6) return (ohms / 1e6).toFixed(2).replace(/\.00$/, '') + ' MΩ';
+      if (ohms >= 1e3) return (ohms / 1e3).toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1') + ' kΩ';
+      return ohms.toFixed(0) + ' Ω';
+    }
+
+    function fmtV(v) {
+      return v.toFixed(2).replace(/(\.\d)0$/, '$1') + ' V';
+    }
+
+    function clamp(val, min, max) {
+      return Math.max(min, Math.min(max, val));
+    }
+
+    function calcLdrResistance(lightPct, darkOhms, brightOhms) {
+      let dark = Math.max(darkOhms, brightOhms + 1);
+      let bright = Math.max(1, Math.min(brightOhms, dark - 1));
+      const x = clamp(lightPct / 100, 0, 1);
+      const logR = Math.log10(dark) + (Math.log10(bright) - Math.log10(dark)) * x;
+      return Math.pow(10, logR);
+    }
+
+    function drawRays(lightPct) {
+      rays.innerHTML = '';
+      const count = 4 + Math.round(lightPct / 16);
+      const opacity = 0.15 + lightPct / 125;
+      for (let i = 0; i < count; i++) {
+        const angle = (-55 + i * (110 / Math.max(count - 1, 1))) * Math.PI / 180;
+        const x1 = 260 + Math.cos(angle) * 95;
+        const y1 = 95 + Math.sin(angle) * 95;
+        const x2 = 260 + Math.cos(angle) * 150;
+        const y2 = 95 + Math.sin(angle) * 150;
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', x1.toFixed(1));
+        line.setAttribute('y1', y1.toFixed(1));
+        line.setAttribute('x2', x2.toFixed(1));
+        line.setAttribute('y2', y2.toFixed(1));
+        line.setAttribute('stroke', '#ffd166');
+        line.setAttribute('stroke-width', '4');
+        line.setAttribute('stroke-linecap', 'round');
+        line.setAttribute('opacity', opacity.toFixed(2));
+        rays.appendChild(line);
+      }
+      glow.setAttribute('opacity', (0.15 + lightPct / 120).toFixed(2));
+    }
+
+    function updateTableWording(positionTop, lightPct) {
+      // table is static enough; main wording is handled in note.
+    }
+
+    function update() {
+      let vinVal = parseFloat(vin.value);
+      let rFixedVal = parseFloat(rfixed.value);
+      let lightVal = parseFloat(light.value);
+      let darkVal = parseFloat(darkR.value) || 100000;
+      let brightVal = parseFloat(brightR.value) || 1000;
+
+      if (brightVal >= darkVal) {
+        darkVal = brightVal + 1;
+        darkR.value = Math.round(darkVal);
+      }
+
+      const rLdr = calcLdrResistance(lightVal, darkVal, brightVal);
+      const isTop = posTop.checked;
+
+      const rTop = isTop ? rLdr : rFixedVal;
+      const rBottom = isTop ? rFixedVal : rLdr;
+      const vOut = vinVal * (rBottom / (rTop + rBottom));
+
+      vinLbl.textContent = vinVal.toFixed(1) + ' V';
+      rfixedLbl.textContent = fmtOhms(rFixedVal);
+      lightLbl.textContent = lightVal.toFixed(0) + '%';
+      ldrOhms.textContent = fmtOhms(rLdr);
+      topOhms.textContent = fmtOhms(rTop);
+      bottomOhms.textContent = fmtOhms(rBottom);
+      vout.textContent = fmtV(vOut);
+      svgVin.textContent = '= ' + vinVal.toFixed(1) + ' V';
+      svgVout.textContent = '= ' + fmtV(vOut);
+
+      topName.textContent = isTop ? 'LDR' : 'Fixed resistor';
+      topValue.textContent = fmtOhms(rTop);
+      bottomName.textContent = isTop ? 'Fixed resistor' : 'LDR';
+      bottomValue.textContent = fmtOhms(rBottom);
+
+      if (isTop) {
+        explanation.innerHTML = 'When the <strong>LDR is on top</strong>, increasing light reduces the LDR resistance. Because the output is measured across the <strong>bottom fixed resistor</strong>, the lower resistor receives a larger share of the supply voltage, so <strong>V<sub>out</sub> increases</strong>.';
+      } else {
+        explanation.innerHTML = 'When the <strong>LDR is on the bottom</strong>, increasing light reduces the LDR resistance. Because the output is measured across the <strong>bottom LDR</strong>, the lower resistor receives a smaller share of the supply voltage, so <strong>V<sub>out</sub> decreases</strong>.';
+      }
+
+      drawRays(lightVal);
+    }
+
+    [vin, rfixed, light, darkR, brightR, posTop, posBottom].forEach(el => {
+      el.addEventListener('input', update);
+      el.addEventListener('change', update);
+    });
+
+    update();
+  </script>
+</body>
+</html>
